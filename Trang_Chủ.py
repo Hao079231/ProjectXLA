@@ -5,14 +5,13 @@ st.set_page_config(
     page_icon="👋",
 )
 
-st.write("# Chào mừng thầy đến với Bài báo cáo cuối kỳ! 👋")
+st.write("# Chào mừng thầy đến với bài báo cáo cuối kỳ! 👋")
 st.write("### Sinh viên thực hiện")
-st.write("#### Bùi Đức Thắng - 22110422")
-st.write("#### Nguyễn Hoài Tân - 22110413")
+st.write("#### Trịnh Trung Hào - 22110316")
+st.write("#### Lê Xuân Thịnh - 22110413")
 st.write("## Mục lục bài cáo cáo:")
 st.markdown(
     """
-    - Giải phương trình bậc 2\n
 	- Nhận diện trái cây\n
 	- Nhận diện khuôn mặt\n
 	- Phát hiện đối tượng\n
