@@ -1,0 +1,5 @@
+train: ../train/images
+val: ../valid/images
+
+nc: 14
+names: ["black_bo", "black_chot", "black_ma", "black_phao", "black_si", "black_tuong", "black_xe", "red_bo", "red_chot", "red_ma", "red_phao", "red_si", "red_tuong", "red_xe"]
