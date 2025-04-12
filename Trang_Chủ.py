@@ -8,7 +8,7 @@ st.set_page_config(
 st.write("# Chào mừng thầy đến với bài báo cáo cuối kỳ! 👋")
 st.write("### Sinh viên thực hiện")
 st.write("#### Trịnh Trung Hào - 22110316")
-st.write("#### Lê Xuân Thịnh - 22110413")
+st.write("#### Lê Xuân Thịnh - 22110456")
 st.write("## Mục lục bài cáo cáo:")
 st.markdown(
     """
