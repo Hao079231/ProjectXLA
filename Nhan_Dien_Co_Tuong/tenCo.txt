@@ -1,11 +1,11 @@
-black_bo
+black_tuong
 black_chot
 black_ma
 black_phao
 black_si
 black_tuong
 black_xe
-red_bo
+red_tuong
 red_chot
 red_ma
 red_phao
