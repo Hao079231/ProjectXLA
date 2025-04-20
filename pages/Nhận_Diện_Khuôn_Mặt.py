@@ -33,7 +33,7 @@ if st.session_state.stop == True:
 
 
 svc = joblib.load('Nhan_Dien_Khuon_Mat/svc.pkl')
-mydict = ['BanKhanh', 'BanPhuc', 'BanThanh', 'BanVu', 'DucThang','HoaiTan','KimChung','NhanSam', 'ThayDuc','VinhPhat']
+mydict = ['TrungHao', 'XuanThinh', 'AnhTin', 'PhiLong', 'TongKhanh','QuangHuy','CuGiang']
 
 def visualize(input, faces, fps, thickness=2):
     if faces[1] is not None:
