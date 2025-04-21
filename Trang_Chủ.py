@@ -21,5 +21,5 @@ st.markdown(
     - Nhận diện màu sắc\n
     - Nhận diện cờ tướng \n   
     - Đếm ngón tay\n
-    - Xử lý ảnh
+    - Xử lý ảnh (Chương 3, 4, 9)
 """)
