@@ -16,7 +16,6 @@ st.markdown(
 	- Nhận diện khuôn mặt\n
 	- Phát hiện đối tượng\n
 	- Nhận diện biển báo trên đường bộ\n
-	- Nhận diện chữ số viết tay\n
     - Nhận diện biển số xe 1 dòng hoặc 2 dòng\n
     - Nhận diện màu sắc\n
     - Nhận diện cờ tướng \n   
