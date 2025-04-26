@@ -2,6 +2,49 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import cv2
+
+st.set_page_config(
+    page_title="Nhận diện đối tượng",
+    page_icon="🔍",
+    layout="wide"
+)
+
+st.markdown("""
+    <style>
+        .stApp {
+            background: linear-gradient(to right, #d0e6f7, #a0d2eb);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            background-color: #0077b6;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .stFileUploader, .stSelectbox, .stButton {
+            background-color: #0077b6 !important;
+            border-radius: 10px !important;
+            padding: 5px 10px !important;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .css-1aumxhk, .css-1v0mbdj, .css-1x8cf1d {  /* Container chung */
+            color: #ffffff !important;
+        }
+
+        .stSelectbox > div > div {
+            color: #ffffff;
+            font-weight: 500;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title('Nhận diện đối tượng')
 
 try:
@@ -124,7 +167,7 @@ def postprocess(frame, outs):
         drawPred(classIds[i], confidences[i], left, top, left + width, top + height)
     return
 
-img_file_buffer = st.file_uploader("Upload an image", type=["bmp", "png", "jpg", "jpeg"])
+img_file_buffer = st.file_uploader("📁 Upload an image", type=["bmp", "png", "jpg", "jpeg"])
 col1, col2 = st.columns([1,1])
 
 if img_file_buffer is not None:
@@ -132,8 +175,7 @@ if img_file_buffer is not None:
     # Chuyển sang cv2 để dùng sau này
     frame = np.array(image)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-
-    with col1:  st.image(image, caption="Hình ảnh tải lên")
+    with col1:  st.image(image, caption="📷 Hình ảnh tải lên", use_column_width=True)
     if st.button('Predict'):
         if not frame is None:
             frameHeight = frame.shape[0]
@@ -155,6 +197,4 @@ if img_file_buffer is not None:
 
             color_coverted = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
             pil_image = Image.fromarray(color_coverted) 
-            with col2:  st.image(pil_image, caption="Kết quả nhận dạng")
-
-
+            with col2:  st.image(pil_image, caption="🛠️ Kết quả nhận dạng", use_column_width=True)
