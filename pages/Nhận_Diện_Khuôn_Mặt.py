@@ -4,8 +4,49 @@ import cv2 as cv
 import joblib
 import os
 
-st.set_page_config(page_title="NhanDangKhuonMat", page_icon="📈")
-st.subheader('Nhận diện khuôn mặt')
+st.set_page_config(
+    page_title="Nhận diện khuôn mặt",
+    page_icon="📸",
+    layout="wide"
+)
+
+st.markdown("""
+    <style>
+        .stApp {
+            background: linear-gradient(to right, #d0e6f7, #a0d2eb);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            background-color: #0077b6;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .stFileUploader, .stSelectbox, .stButton {
+            background-color: #0077b6 !important;
+            border-radius: 10px !important;
+            padding: 5px 10px !important;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .css-1aumxhk, .css-1v0mbdj, .css-1x8cf1d {  /* Container chung */
+            color: #ffffff !important;
+        }
+
+        .stSelectbox > div > div {
+            color: #ffffff;
+            font-weight: 500;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title('Nhận diện khuôn mặt')
 
 FRAME_WINDOW = st.image([])
 cap = cv.VideoCapture(0)
@@ -15,8 +56,11 @@ if 'stop' not in st.session_state:
     st.session_state.stop = False
 
 # Nút nhận diện và dừng
-click = st.button("Nhận diện")
-press = st.button('Dừng lại')
+col1, col2 = st.columns([1,1])
+with col1:
+    click = st.button("Nhận diện")
+with col2:
+    press = st.button('Dừng lại')
 
 if press:
     st.session_state.stop = not st.session_state.stop

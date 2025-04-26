@@ -2,6 +2,49 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import cv2
+
+st.set_page_config(
+    page_title="Nhận dạng biển báo đường bộ",
+    page_icon="🚦",
+    layout="wide"
+)
+
+st.markdown("""
+    <style>
+        .stApp {
+            background: linear-gradient(to right, #d0e6f7, #a0d2eb);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            background-color: #0077b6;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .stFileUploader, .stSelectbox, .stButton {
+            background-color: #0077b6 !important;
+            border-radius: 10px !important;
+            padding: 5px 10px !important;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .css-1aumxhk, .css-1v0mbdj, .css-1x8cf1d {  /* Container chung */
+            color: #ffffff !important;
+        }
+
+        .stSelectbox > div > div {
+            color: #ffffff;
+            font-weight: 500;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title('Nhận dạng biển báo đường bộ')
 
 try:
@@ -41,12 +84,10 @@ def postprocess(frame, outs):
     frameWidth = frame.shape[1]
 
     def drawPred(classId, conf, left, top, right, bottom):
-        # Draw a bounding box.
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0))
 
         label = '%.2f' % conf
 
-        # Print a label of class.
         if classes:
             assert(classId < len(classes))
             label = '%s: %s' % (classes[classId], label)
@@ -64,9 +105,6 @@ def postprocess(frame, outs):
     confidences = []
     boxes = []
     if lastLayer.type == 'Region' or postprocessing == 'yolov8':
-        # Network produces output blob with a shape NxC where N is a number of
-        # detected objects and C is a number of classes + 4 where the first 4
-        # numbers are [center_x, center_y, width, height]
         if postprocessing == 'yolov8':
             box_scale_w = frameWidth / mywidth
             box_scale_h = frameHeight / myheight
@@ -98,8 +136,6 @@ def postprocess(frame, outs):
         print('Unknown output layer type: ' + lastLayer.type)
         exit()
 
-    # NMS is used inside Region layer only on DNN_BACKEND_OPENCV for another backends we need NMS in sample
-    # or NMS is required if number of outputs > 1
     if len(outNames) > 1 or (lastLayer.type == 'Region' or postprocessing == 'yolov8') and 0 != cv2.dnn.DNN_BACKEND_OPENCV:
         indices = []
         classIds = np.array(classIds)
@@ -124,29 +160,26 @@ def postprocess(frame, outs):
         drawPred(classIds[i], confidences[i], left, top, left + width, top + height)
     return
 
-img_file_buffer = st.file_uploader("Upload an image", type=["bmp", "png", "jpg", "jpeg"])
+img_file_buffer = st.file_uploader("📁 Upload an image", type=["bmp", "png", "jpg", "jpeg"])
 col1, col2 = st.columns([1,1])
 
 if img_file_buffer is not None:
     image = Image.open(img_file_buffer) 
-    # Chuyển sang cv2 để dùng sau này
     frame = np.array(image)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-    with col1:  st.image(image, caption="Hình ảnh tải lên")
+    with col1:  st.image(image, caption="📷 Hình ảnh tải lên", use_column_width=True)
     if st.button('Predict'):
         if not frame is None:
             frameHeight = frame.shape[0]
             frameWidth = frame.shape[1]
 
-            # Create a 4D blob from a frame.
             inpWidth = mywidth if mywidth else frameWidth
             inpHeight = myheight if myheight else frameHeight
             blob = cv2.dnn.blobFromImage(frame, size=(inpWidth, inpHeight), swapRB=True, ddepth=cv2.CV_8U)
 
-            # Run a model
             st.session_state["Net"].setInput(blob, scalefactor=scale, mean=mean)
-            if st.session_state["Net"].getLayer(0).outputNameToIndex('im_info') != -1:  # Faster-RCNN or R-FCN
+            if st.session_state["Net"].getLayer(0).outputNameToIndex('im_info') != -1:
                 frame = cv2.resize(frame, (inpWidth, inpHeight))
                 st.session_state["Net"].setInput(np.array([[inpHeight, inpWidth, 1.6]], dtype=np.float32), 'im_info')
 
@@ -155,6 +188,4 @@ if img_file_buffer is not None:
 
             color_coverted = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
             pil_image = Image.fromarray(color_coverted) 
-            with col2:  st.image(pil_image,caption="Kết quả nhận dạng")
-
-
+            with col2:  st.image(pil_image, caption="🛠️ Kết quả nhận dạng", use_column_width=True)
