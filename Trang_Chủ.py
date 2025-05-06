@@ -90,7 +90,7 @@ st.markdown("""
     <div class="content-text">
         <h3>📚 Sinh viên thực hiện</h3>
         <h4>🎓 Trịnh Trung Hào - 22110316</h4>
-        <h4>🎓 Lê Xuân Thịnh - 22110412</h4>
+        <h4>🎓 Lê Xuân Thịnh - 22110427</h4>
     </div>
 """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
@@ -105,7 +105,6 @@ st.markdown(
         <li>Nhận diện khuôn mặt</li>
         <li>Phát hiện đối tượng</li>
         <li>Nhận diện biển báo trên đường bộ</li>
-        <li>Nhận diện biển số xe 1 dòng hoặc 2 dòng</li>
         <li>Nhận diện màu sắc</li>
         <li>Nhận diện cờ tướng</li>   
         <li>Đếm ngón tay</li>
