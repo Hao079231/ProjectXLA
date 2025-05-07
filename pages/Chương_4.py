@@ -5,100 +5,113 @@ import cv2
 L = 256
 
 def Spectrum(imgin):
-    M, N = imgin.shape
-    P = cv2.getOptimalDFTSize(M)
-    Q = cv2.getOptimalDFTSize(N)
-    fp = np.zeros((P,Q), np.float32)
-    fp[:M,:N] = imgin
-    fp = fp/(L-1)
-    for x in range(0, M):
-        for y in range(0, N):
-            if (x+y) % 2 == 1:
-                fp[x,y] = -fp[x,y]
-    F = cv2.dft(fp, flags = cv2.DFT_COMPLEX_OUTPUT)
-    S = np.sqrt(F[:,:,0]**2 + F[:,:,1]**2)
+    f = imgin.astype(np.float32)/(L-1)
+    F = np.fft.fft2(f)
+    F = np.fft.fftshift(F)
+    FR = F.real.copy()
+    FI = F.imag.copy()
+    S = np.sqrt(FR**2 + FI**2)
     S = np.clip(S, 0, L-1)
     return S.astype(np.uint8)
 
-def FrequencyFilter(imgin):
-    M, N = imgin.shape
-    P = cv2.getOptimalDFTSize(M)
-    Q = cv2.getOptimalDFTSize(N)
-    fp = np.zeros((P,Q), np.float32)
-    fp[:M,:N] = imgin
-    for x in range(0, M):
-        for y in range(0, N):
-            if (x+y) % 2 == 1:
-                fp[x,y] = -fp[x,y]
-    F = cv2.dft(fp, flags = cv2.DFT_COMPLEX_OUTPUT)
-    H = np.zeros((P,Q), np.float32)
-    D0 = 60
-    n = 2
-    for u in range(0, P):
-        for v in range(0, Q):
-            Duv = np.sqrt((u-P//2)**2 + (v-Q//2)**2)
-            if Duv > 0:
-                H[u,v] = 1.0/(1.0 + np.power(D0/Duv,2*n))
-    G = F.copy()
-    for u in range(0, P):
-        for v in range(0, Q):
-            G[u,v,0] = F[u,v,0]*H[u,v]
-            G[u,v,1] = F[u,v,1]*H[u,v]
-    g = cv2.idft(G, flags = cv2.DFT_SCALE)
-    gp = g[:,:,0]
-    for x in range(0, P):
-        for y in range(0, Q):
-            if (x+y)%2 == 1:
-                gp[x,y] = -gp[x,y]
-    imgout = gp[0:M,0:N]
-    return np.clip(imgout,0,L-1).astype(np.uint8)
+def FrequencyFilter(imgin, H):
+    f = imgin.astype(np.float32)
+    F = np.fft.fft2(f)
+    F = np.fft.fftshift(F)
+    G = F * H
+    G = np.fft.ifftshift(G)
+    g = np.fft.ifft2(G)
+    gR = g.real.copy()
+    gR = np.clip(gR, 0, L-1)
+    return gR.astype(np.uint8)
 
-def CreateNotchRejectFilter():
-    P = 250
-    Q = 180
+def CreateNotchFilter(P,Q):
+    H = np.ones((P,Q), np.complex64)
+    coords = [(44, 55), (85, 55), (40, 112), (81, 112)]
     D0 = 10
-    n = 2
-    H = np.ones((P,Q), np.float32)
-    coords = [(44, 58), (40, 119), (86, 59), (82, 119)]
     for u in range(P):
         for v in range(Q):
-            h = 1.0
-            for (ui, vi) in coords:
-                for du, dv in [(ui, vi), (P-ui, Q-vi)]:
-                    Duv = np.sqrt((u-du)**2 + (v-dv)**2)
-                    h *= 1.0/(1.0 + np.power(D0/Duv,2*n)) if Duv > 0 else 0.0
-            H[u,v] = h
+            for (ui, vi) in coords + [(P-ui, Q-vi) for (ui, vi) in coords]:
+                d = np.sqrt((u - ui)**2 + (v - vi)**2)
+                if d < D0:
+                    H[u,v] = 0
     return H
 
-def DrawNotchRejectFilter():
-    H = CreateNotchRejectFilter()
-    return (H*(L-1)).astype(np.uint8)
+def CreateInterferenceFilter(M,N):
+    H = np.ones((M,N), np.complex64)
+    D0 = 7
+    for u in range(M):
+        for v in range(N):
+            if u not in range(M//2-D0, M//2+D0+1):
+                if v in range(N//2-D0, N//2+D0+1):
+                    H[u,v] = 0.0
+    return H
 
+def CreateMotionFilter(M,N):
+    H = np.ones((M,N), np.complex64)
+    a = 0.1
+    b = 0.1
+    T = 1.0
+    phi_prev = 0.0
+    for u in range(M):
+        for v in range(N):
+            phi = np.pi*((u-M//2)*a + (v-N//2)*b)
+            if abs(phi) < 1e-6:
+                phi = phi_prev
+            RE = T*np.sin(phi)/phi*np.cos(phi)
+            IM = T*np.sin(phi)/phi*np.sin(phi)
+            H[u,v] = RE + 1j*IM
+            phi_prev = phi
+    return H
+
+def CreateDeMotionFilter(M,N):
+    H = np.ones((M,N), np.complex64)
+    a = 0.1
+    b = 0.1
+    T = 1.0
+    phi_prev = 0.0
+    for u in range(M):
+        for v in range(N):
+            phi = np.pi*((u-M//2)*a + (v-N//2)*b)
+            if abs(np.sin(phi)) < 1e-6:
+                phi = phi_prev
+            RE = phi/(T*np.sin(phi))*np.cos(phi)
+            IM = phi/T
+            H[u,v] = RE + 1j*IM
+            phi_prev = phi
+    return H
+
+def CreateWeinerFilter(M,N):
+    H = CreateDeMotionFilter(M,N)
+    P = H.real**2 + H.imag**2
+    K = -0.5
+    return H * P / (P + K)
+
+# ----------------- Các hàm xử lý cao cấp -----------------
 def RemoveMoire(imgin):
     M, N = imgin.shape
-    P = cv2.getOptimalDFTSize(M)
-    Q = cv2.getOptimalDFTSize(N)
-    fp = np.zeros((P,Q), np.float32)
-    fp[:M,:N] = imgin
-    for x in range(0, M):
-        for y in range(0, N):
-            if (x+y) % 2 == 1:
-                fp[x,y] = -fp[x,y]
-    F = cv2.dft(fp, flags = cv2.DFT_COMPLEX_OUTPUT)
-    H = CreateNotchRejectFilter()
-    G = F.copy()
-    for u in range(0, P):
-        for v in range(0, Q):
-            G[u,v,0] = F[u,v,0]*H[u,v]
-            G[u,v,1] = F[u,v,1]*H[u,v]
-    g = cv2.idft(G, flags = cv2.DFT_SCALE)
-    gp = g[:,:,0]
-    for x in range(0, P):
-        for y in range(0, Q):
-            if (x+y)%2 == 1:
-                gp[x,y] = -gp[x,y]
-    imgout = gp[0:M,0:N]
-    return np.clip(imgout,0,L-1).astype(np.uint8)
+    H = CreateNotchFilter(M, N)
+    return FrequencyFilter(imgin, H)
+
+def RemoveInterference(imgin):
+    M, N = imgin.shape
+    H = CreateInterferenceFilter(M,N)
+    return FrequencyFilter(imgin, H)
+
+def CreateMotion(imgin):
+    M, N = imgin.shape
+    H = CreateMotionFilter(M,N)
+    return FrequencyFilter(imgin, H)
+
+def DeMotion(imgin):
+    M, N = imgin.shape
+    H = CreateDeMotionFilter(M,N)
+    return FrequencyFilter(imgin, H)
+
+def DeMotionWeiner(imgin):
+    M, N = imgin.shape
+    H = CreateWeinerFilter(M,N)
+    return FrequencyFilter(imgin, H)
 
 
 st.set_page_config(page_title="Xử lý ảnh tần số", page_icon="📈", layout="wide")
@@ -142,10 +155,12 @@ technique = st.selectbox(
     "🛠️ Chọn kỹ thuật xử lý:",
     (
         "Spectrum",
-        "FrequencyFilter",
-        "CreateNotchRejectFilter",
-        "DrawNotchRejectFilter",
-        "RemoveMoire"
+        "RemoveMoire",
+        "RemoveInterference",
+        "CreateMotion",
+        "DeMotion",
+        "DeMotionWeiner",
+        "DemotionNoise",
     )
 )
 
@@ -153,19 +168,24 @@ col1, col2 = st.columns(2)
 
 if uploaded_file is not None:
     imgin = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), cv2.IMREAD_GRAYSCALE)
+
     with col1:
         st.image(imgin, caption="📷 Hình ảnh gốc", use_column_width=True)
 
     if technique == "Spectrum":
         processed_img = Spectrum(imgin)
-    elif technique == "FrequencyFilter":
-        processed_img = FrequencyFilter(imgin)
-    elif technique == "CreateNotchRejectFilter":
-        processed_img = CreateNotchRejectFilter()
-    elif technique == "DrawNotchRejectFilter":
-        processed_img = DrawNotchRejectFilter()
     elif technique == "RemoveMoire":
         processed_img = RemoveMoire(imgin)
-
+    elif technique == "RemoveInterference":
+        processed_img = RemoveInterference(imgin)
+    elif technique == "CreateMotion":
+        processed_img = CreateMotion(imgin)
+    elif technique == "DeMotion":
+        processed_img = DeMotion(imgin)
+    elif technique == "DeMotionWeiner":
+        processed_img = DeMotionWeiner(imgin)
+    elif technique == "DemotionNoise":
+        temp = cv2.medianBlur(imgin,7)
+        processed_img = DeMotion(temp)
     with col2:
         st.image(processed_img, caption="🛠️ Hình ảnh sau xử lý", use_column_width=True)
