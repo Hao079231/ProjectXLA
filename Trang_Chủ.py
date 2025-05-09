@@ -103,12 +103,11 @@ st.markdown(
     <ul class="toc-list">
         <li>Nhận diện trái cây</li>
         <li>Nhận diện khuôn mặt</li>
-        <li>Phát hiện đối tượng</li>
+        <li>Xử lý ảnh (Chương 3, 4, 9)</li>
         <li>Nhận diện biển báo trên đường bộ</li>
         <li>Nhận diện màu sắc</li>
-        <li>Nhận diện cờ tướng</li>   
+        <li>Nhận diện cờ tướng</li>
         <li>Đếm ngón tay</li>
-        <li>Xử lý ảnh (Chương 3, 4, 9)</li>
     </ul>
 """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
